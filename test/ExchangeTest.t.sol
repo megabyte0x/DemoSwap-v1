@@ -27,10 +27,18 @@ contract ExchangeTest is Test {
     }
 
     function testAddLiquidity() public {
-        token.approve(address(exchange), 200 ether);
-        exchange.addLiquidity(200 ether);
+        token.approve(address(exchange), 200e18);
+        exchange.addLiquidity(200e18);
+        
         (bool success, ) = address(exchange).call{value: 100 ether}("");
         if(!success) revert ExchangeTest__TestAddLiquidityFailed();
-        console.log("Liquidity Added");
+
+        uint256 tokenBalance =  exchange.getReserveBalance();
+        assertEq(tokenBalance, 200e18);
+
+        uint256 ethBalance =  address(exchange).balance;
+        assertEq(ethBalance, 100 ether);
+
+        console.log("Test Liquidity Added Successfully✅")
     }
 }
