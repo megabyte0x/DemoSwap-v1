@@ -20,10 +20,8 @@ contract ExchangeTest is Test {
 
     function setUp() external{
         token = new Token(TOKEN_NAME,TOKEN_SYMBOL, INITIAL_SUPPLY);
-        console.log("Token address: %s", address(token));
 
         exchange = new Exchange(address(token));
-        console.log("Exchange address: %s", address(exchange));
     }
 
     function testAddLiquidity() public {
@@ -39,6 +37,33 @@ contract ExchangeTest is Test {
         uint256 ethBalance =  address(exchange).balance;
         assertEq(ethBalance, 100 ether);
 
-        console.log("Test Liquidity Added Successfully✅")
+        console.log("=======Test Liquidity Added Successfully=======");
+    }
+
+    function testGetPrice() public {
+        testAddLiquidity();
+
+        uint256 tokenBalance =  exchange.getReserveBalance();
+        uint256 ethBalance =  address(exchange).balance;
+
+        // @notice: This returns the ETH per token with 3 decimals
+        uint256 ethPerToken = exchange.getPrice(ethBalance, tokenBalance);
+
+        // @notice: This returns the Token per ETH with 3 decimals
+        uint256 tokenPerETH = exchange.getPrice(tokenBalance, ethBalance);
+
+        assertEq(ethPerToken, 500);
+        assertEq(tokenPerETH, 2000);
+
+        console.log("=======Test Get Price Successful=======");
+
+    }
+
+    function testAmount() public {
+        testAddLiquidity();
+        uint256 ethAmount = exchange.getETHAmount(2e18);
+        console.log(ethAmount);
+        uint256 tokenAmount = exchange.getTokenAmount(1 ether);
+        console.log(tokenAmount);
     }
 }
