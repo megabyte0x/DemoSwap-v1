@@ -8,6 +8,8 @@ import {Test, console} from "forge-std/Test.sol";
 
 contract ExchangeTest is Test {
 
+    error ExchangeTest__TestAddLiquidityFailed();
+
     Token token;
     Exchange exchange;
 
@@ -25,8 +27,10 @@ contract ExchangeTest is Test {
     }
 
     function testAddLiquidity() public {
-        token.approve(address(exchange), 100e18);
-        exchange.addLiquidity(10e18);
+        token.approve(address(exchange), 200 ether);
+        exchange.addLiquidity(200 ether);
+        (bool success, ) = address(exchange).call{value: 100 ether}("");
+        if(!success) revert ExchangeTest__TestAddLiquidityFailed();
         console.log("Liquidity Added");
     }
 }
