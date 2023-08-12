@@ -3,6 +3,11 @@ pragma solidity 0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
+/**
+ * @title Exchange
+ * @author Megabyte
+ * @notice This contract is used to exchange ETH and tokens
+ */
 contract Exchange {
 
     //////////////////////////////////////////////////////////////

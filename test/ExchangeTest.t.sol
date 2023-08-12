@@ -6,6 +6,12 @@ import {Exchange} from "../src/Exchange.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 
+/**
+ * @title ExchangeTest
+ * @author Megabyte
+ * @notice This contract is used to test the Exchange contract
+ */
+
 contract ExchangeTest is Test {
 
     error ExchangeTest__TestAddLiquidityFailed();
@@ -17,13 +23,21 @@ contract ExchangeTest is Test {
     string constant TOKEN_NAME = "New Token";
     string constant TOKEN_SYMBOL = "NT";
 
-
+    /**
+     * @notice: This function is called before each test function
+     * @dev: It creates a new token and exchange contract
+     */
     function setUp() external{
         token = new Token(TOKEN_NAME,TOKEN_SYMBOL, INITIAL_SUPPLY);
-
         exchange = new Exchange(address(token));
     }
 
+    /**
+     * @notice: This test function checks if the liquidity is added successfully
+     * @dev: It approves the exchange contract to transfer tokens from the user
+     * @dev: It adds liquidity to the exchange contract
+     * @dev: It checks if the token and eth balance of the exchange contract is correct
+     */
     function testAddLiquidity() public {
         token.approve(address(exchange), 200e18);
         exchange.addLiquidity(200e18);
@@ -40,6 +54,9 @@ contract ExchangeTest is Test {
         console.log("=======Test Liquidity Added Successfully=======");
     }
 
+    /**
+     * @notice: This test function checks if the ETH/Token or Token/ETH price function is working correctly
+     */
     function testGetPrice() public {
         testAddLiquidity();
 
@@ -59,6 +76,9 @@ contract ExchangeTest is Test {
 
     }
 
+    /**
+     * @notice: This function test if the ETH/Token amount received after selling ETH/Token is working correctly
+     */
     function testAmount() public {
         testAddLiquidity();
         uint256 ethAmount = exchange.getETHAmount(2e18);
