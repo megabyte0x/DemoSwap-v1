@@ -11,6 +11,9 @@ contract Exchange {
     error Exchange__ZeroAddress();
     error Exchange__AddingLiquidityFailed();
     error Exchange__ZeroValue();
+    error Exchange__SlippageExceeded();
+    error Exchange__ETHToTokenSwapFailed();
+    error Exchange__TokenToETHSwapFailed();
 
     address public immutable i_tokenAddress;
 
@@ -31,6 +34,26 @@ contract Exchange {
     function addLiquidity(uint256 _tokenAmount) external payable {
         IERC20 token = IERC20(i_tokenAddress);
         if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+    }
+
+    function ethToTokenSwap(uint256 _minTokens) external payable {
+        uint256 tokenReserve = getReserveBalance();
+        uint256 tokensBought = getAmount(msg.value, address(this).balance - msg.value, tokenReserve);
+        
+        if (tokensBought < _minTokens) revert Exchange__SlippageExceeded();
+
+        bool success = IERC20(i_tokenAddress).transferFrom(address(this), msg.sender, tokensBought);
+        if(!success) revert Exchange__ETHToTokenSwapFailed();
+    }
+
+    function tokenToETHSwap(uint256 _tokenSold, uint256 _minTokens) external payable {
+        uint256 tokenReserve = getReserveBalance();
+        uint256 ethBought = getETHAmount(_tokenSold, tokenReserve, address(this).balance); 
+        
+        if(ethBought < _minTokens) revert Exchange__SlippageExceeded();
+
+        (bool success, ) = msg.sender.call{value: ethBought}("");
+        if(!success) revert Exchange__TokenToETHSwapFailed();
     }
 
     //////////////////////////////////////////////////////////////
