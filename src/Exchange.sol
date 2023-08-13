@@ -22,6 +22,14 @@ contract Exchange is ERC20 {
     error Exchange__ETHToTokenSwapFailed();
     error Exchange__TokenToETHSwapFailed();
 
+    //////////////////////////////////////////////////////////////
+    ////////////////// EVENTS ////////////////////////////////////
+    //////////////////////////////////////////////////////////////
+    event Exchange__LiquidityAdded(address indexed _user, uint256 _ethAmount, uint256 _tokenAmount, uint256 _lpAmount);
+    event Exchange__LiquidityRemoved(address indexed _user, uint256 _ethAmount, uint256 _tokenAmount, uint256 _lpAmount);
+    event Exchange__ETHToTokenSwap(address indexed _user, uint256 _ethAmount, uint256 _tokenAmount);
+    event Exchange__TokenToETHSwap(address indexed _user, uint256 _tokenAmount, uint256 _ethAmount);
+
     address public immutable i_tokenAddress;
 
     string constant public NAME = "Exchange";
@@ -42,14 +50,17 @@ contract Exchange is ERC20 {
     //////////////////////////////////////////////////////////////
 
     function addLiquidity(uint256 _tokenAmount) external payable returns(uint256){
+
         if(!(getReserveBalance()>0)) {
-        IERC20 token = IERC20(i_tokenAddress);
-        if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+            IERC20 token = IERC20(i_tokenAddress);
+            if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
 
-        uint256 liquidity = address(this).balance;
-        _mint(msg.sender, liquidity);
+            uint256 liquidity = address(this).balance;
+            _mint(msg.sender, liquidity);
 
-        return liquidity;
+            emit Exchange__LiquidityAdded(msg.sender, msg.value, _tokenAmount, liquidity);
+
+            return liquidity;
         } else {
             uint256 ethReserve = address(this).balance - msg.value;
             uint256 tokenReserve = getReserveBalance();
@@ -62,22 +73,31 @@ contract Exchange is ERC20 {
             uint256 liquidity = (totalSupply() * msg.value)/ethReserve;
             _mint(msg.sender, liquidity);
 
+            emit Exchange__LiquidityAdded(msg.sender, msg.value, _tokenAmount, liquidity);
+
             return liquidity;
         }
     }
 
-    function removeLiquidity(uint256 _amount) external returns(uint256, uint256){
+    /**
+     * 
+     * @param _amount Amount of LP Tokens to be removed
+     * @return ethAmount Amount of ETH to be returned
+     * @return tokenAmount Amount of Tokens to be returned
+     */
+    function removeLiquidity(uint256 _amount) external returns(uint256 ethAmount, uint256 tokenAmount){
         if (_amount < 0) revert Exchange__ZeroValue();
 
-        uint256 ethAmount = (address(this).balance * _amount) / totalSupply();
-        uint256 tokenAmount = (getReserveBalance() * _amount) / totalSupply();
+        ethAmount = (address(this).balance * _amount) / totalSupply();
+        tokenAmount = (getReserveBalance() * _amount) / totalSupply();
 
         _burn(msg.sender, _amount);
 
-        (bool success, ) = msg.sender.call{value: ethAmount}("");
-        if(!success) revert Exchange__RemovingLiquidityFailed();
+        payable(msg.sender).transfer(ethAmount);
 
-        IERC20(i_tokenAddress).transferFrom(address(this), msg.sender, tokenAmount);
+        IERC20(i_tokenAddress).transfer( msg.sender, tokenAmount);
+
+        emit Exchange__LiquidityRemoved(msg.sender, ethAmount, tokenAmount, _amount);
 
         return (ethAmount, tokenAmount);
     }
@@ -90,6 +110,8 @@ contract Exchange is ERC20 {
 
         bool success = IERC20(i_tokenAddress).transfer(msg.sender, tokensBought);
         if(!success) revert Exchange__ETHToTokenSwapFailed();
+
+        emit Exchange__ETHToTokenSwap(msg.sender, msg.value, tokensBought);
     }
 
     function tokenToETHSwap(uint256 _tokenSold, uint256 _minTokens) external payable {
@@ -100,6 +122,8 @@ contract Exchange is ERC20 {
 
         (bool success, ) = msg.sender.call{value: ethBought}("");
         if(!success) revert Exchange__TokenToETHSwapFailed();
+
+        emit Exchange__TokenToETHSwap(msg.sender, _tokenSold, ethBought);
     }
 
     //////////////////////////////////////////////////////////////
@@ -131,10 +155,6 @@ contract Exchange is ERC20 {
 
         return getAmount(_tokenSold, tokenReserve, address(this).balance);
     }
-
-    //////////////////////////////////////////////////////////////
-    ////////////////// Public & View Functions /////////////////
-    //////////////////////////////////////////////////////////////
 
     function getReserveBalance() public view returns (uint256) {
         return IERC20(i_tokenAddress).balanceOf(address(this));
