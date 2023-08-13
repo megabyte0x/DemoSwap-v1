@@ -2,14 +2,14 @@
 pragma solidity 0.8.18;
 
 import {Token} from "../src/Token.sol";
-import {Exchange} from "../src/Exchange.sol";
+import {GraphKitExchange} from "../src/GraphKitExchange.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title ExchangeTest
  * @author Megabyte
- * @notice This contract is used to test the Exchange contract
+ * @notice This contract is used to test the GraphKitExchange contract
  */
 
 contract ExchangeTest is Test {
@@ -17,7 +17,7 @@ contract ExchangeTest is Test {
     error ExchangeTest__TestAddLiquidityFailed();
 
     Token token;
-    Exchange exchange;
+    GraphKitExchange exchange;
 
     uint256 constant INITIAL_SUPPLY = 500e18;
     string constant TOKEN_NAME = "New Token";
@@ -25,7 +25,7 @@ contract ExchangeTest is Test {
 
     function setUp() external{
         token = new Token(TOKEN_NAME,TOKEN_SYMBOL, INITIAL_SUPPLY);
-        exchange = new Exchange(address(token));
+        exchange = new GraphKitExchange(address(token));
     }
 
     function testAddLiquidity() public {
@@ -59,8 +59,8 @@ contract ExchangeTest is Test {
         uint256 tokenExchangeBalanceBefore = token.balanceOf(address(exchange));
         uint256 ethExchangeBalanceBefore = address(exchange).balance;
 
-        console.log("Token Exchange Balance, %s", tokenExchangeBalanceBefore);
-        console.log("ETH Exchange Balance, %s", ethExchangeBalanceBefore);
+        console.log("Token GraphKitExchange Balance, %s", tokenExchangeBalanceBefore);
+        console.log("ETH GraphKitExchange Balance, %s", ethExchangeBalanceBefore);
 
         uint256 tokenBalanceBefore = token.balanceOf(address(this));
         uint256 ethBalanceBefore = address(this).balance;
