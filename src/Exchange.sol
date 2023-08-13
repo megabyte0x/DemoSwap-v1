@@ -58,7 +58,7 @@ contract Exchange is ERC20 {
             IERC20 token = IERC20(i_tokenAddress);
             if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
 
-            uint256 liquidity = (totalSupply()* msg.value)/ethReserve;
+            uint256 liquidity = (totalSupply() * msg.value)/ethReserve;
             _mint(msg.sender, liquidity);
 
             return liquidity;
@@ -130,14 +130,19 @@ contract Exchange is ERC20 {
     /**
     * @param - inputAmount: The amount of tokenA received 
     * @param - inputReserve: The amount of tokenA in the pool
-    * @param - outputReserver: The amount of tokenB in the pool
+    * @param - outputReserve: The amount of tokenB in the pool
     * @return - The amount of tokenB that you will receive for tokenA
     * @notice - Formula: ∆y = (y∆x)/(x + ∆x)
+    * @notice - 0.1% fee is charged
     */
-    function getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserver) private pure returns (uint256) {
-        if (inputReserve < 0 && outputReserver < 0) revert Exchange__ZeroValue();
+    function getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) private pure returns (uint256) {
+        if (inputReserve < 0 && outputReserve < 0) revert Exchange__ZeroValue();
+
+        uint256 inputAmountWithFee = inputAmount * 999;
+        uint256 numerator = inputAmountWithFee * outputReserve;
+        uint256 denominator = (inputReserve * 1000) + inputAmountWithFee;
         
-        return (inputAmount * outputReserver) / (inputReserve + inputAmount);
+        return numerator / denominator;
     }
 
     // Function to receive Ether. msg.data must be empty
