@@ -37,8 +37,18 @@ contract Exchange {
     //////////////////////////////////////////////////////////////
 
     function addLiquidity(uint256 _tokenAmount) external payable {
+        if(getReserveBalance()<0) {
         IERC20 token = IERC20(i_tokenAddress);
         if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+        } else {
+            uint256 ethReserve = address(this).balance - msg.value;
+            uint256 tokenReserve = getReserveBalance();
+            uint256 tokenAmount = (msg.value * tokenReserve) / ethReserve;
+            if(tokenAmount < _tokenAmount) revert Exchange__SlippageExceeded();
+            
+            IERC20 token = IERC20(i_tokenAddress);
+            if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+        }
     }
 
     function ethToTokenSwap(uint256 _minTokens) external payable {
