@@ -88,7 +88,7 @@ contract Exchange is ERC20 {
         
         if (tokensBought < _minTokens) revert Exchange__SlippageExceeded();
 
-        bool success = IERC20(i_tokenAddress).transferFrom(address(this), msg.sender, tokensBought);
+        bool success = IERC20(i_tokenAddress).transfer(msg.sender, tokensBought);
         if(!success) revert Exchange__ETHToTokenSwapFailed();
     }
 
