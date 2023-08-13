@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {Exchange} from "./Exchange.sol";
+import {GraphKitExchange} from "./GraphKitExchange.sol";
 
 contract Factory {
 
@@ -15,9 +15,9 @@ contract Factory {
     function createExchange(address _tokenAddress) external returns (address exchangeAddress) {
         
         if(_tokenAddress == address(0)) revert Factory__ZeroAddress();
-        if(tokenToExchange[_tokenAddress] == address(0)) revert Factory__ExchangeAlreadyCreated();
+        if(tokenToExchange[_tokenAddress] != address(0)) revert Factory__ExchangeAlreadyCreated();
 
-        Exchange exchange = new Exchange(_tokenAddress);
+        GraphKitExchange exchange = new GraphKitExchange(_tokenAddress);
         tokenToExchange[_tokenAddress] = address(exchange);
 
         emit Factory__ExchangeCreated(_tokenAddress, address(exchange));
