@@ -2,13 +2,14 @@
 pragma solidity 0.8.18;
 
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title Exchange
  * @author Megabyte
  * @notice This contract is used to exchange ETH and tokens
  */
-contract Exchange {
+contract Exchange is ERC20 {
 
     //////////////////////////////////////////////////////////////
     ////////////////// ERRORS ////////////////////////////////////
@@ -22,12 +23,15 @@ contract Exchange {
 
     address public immutable i_tokenAddress;
 
+    string constant public NAME = "Exchange";
+    string constant public SYMBOL = "EXC";
+
     //////////////////////////////////////////////////////////////
     ////////////////// CONSTANTS /////////////////////////////////
     //////////////////////////////////////////////////////////////
     uint256 constant PRECISION_INCREAMENT = 1000;
 
-    constructor(address _tokenAddress) {
+    constructor(address _tokenAddress) ERC20(NAME, SYMBOL) {
         if(_tokenAddress == address(0)) revert Exchange__ZeroAddress();
         i_tokenAddress = _tokenAddress;
     }
@@ -45,7 +49,7 @@ contract Exchange {
             uint256 tokenReserve = getReserveBalance();
             uint256 tokenAmount = (msg.value * tokenReserve) / ethReserve;
             if(tokenAmount < _tokenAmount) revert Exchange__SlippageExceeded();
-            
+
             IERC20 token = IERC20(i_tokenAddress);
             if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
         }
