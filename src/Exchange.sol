@@ -40,10 +40,15 @@ contract Exchange is ERC20 {
     ////////////////// External Functions ////////////////////////
     //////////////////////////////////////////////////////////////
 
-    function addLiquidity(uint256 _tokenAmount) external payable {
-        if(getReserveBalance()<0) {
+    function addLiquidity(uint256 _tokenAmount) external payable returns(uint256){
+        if(!getReserveBalance()>0) {
         IERC20 token = IERC20(i_tokenAddress);
         if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+
+        uint256 liquidity = address(this).balance;
+        _mint(msg.sender, liquidity);
+
+        return liquidity;
         } else {
             uint256 ethReserve = address(this).balance - msg.value;
             uint256 tokenReserve = getReserveBalance();
@@ -52,6 +57,11 @@ contract Exchange is ERC20 {
 
             IERC20 token = IERC20(i_tokenAddress);
             if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
+
+            uint256 liquidity = (totalSupply()* msg.value)/ethReserve;
+            _mint(msg.sender, liquidity);
+
+            return liquidity;
         }
     }
 
