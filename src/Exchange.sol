@@ -42,7 +42,7 @@ contract Exchange is ERC20 {
     //////////////////////////////////////////////////////////////
 
     function addLiquidity(uint256 _tokenAmount) external payable returns(uint256){
-        if(!getReserveBalance()>0) {
+        if(!(getReserveBalance()>0)) {
         IERC20 token = IERC20(i_tokenAddress);
         if (!token.transferFrom(msg.sender, address(this), _tokenAmount)) revert Exchange__AddingLiquidityFailed();
 
@@ -66,7 +66,7 @@ contract Exchange is ERC20 {
         }
     }
 
-    function removeLiquidity(uint256 _amount) external public returns(uint256, uint256){
+    function removeLiquidity(uint256 _amount) external returns(uint256, uint256){
         if (_amount < 0) revert Exchange__ZeroValue();
 
         uint256 ethAmount = (address(this).balance * _amount) / totalSupply();
@@ -94,7 +94,7 @@ contract Exchange is ERC20 {
 
     function tokenToETHSwap(uint256 _tokenSold, uint256 _minTokens) external payable {
         uint256 tokenReserve = getReserveBalance();
-        uint256 ethBought = getETHAmount(_tokenSold, tokenReserve, address(this).balance); 
+        uint256 ethBought = getAmount(_tokenSold, tokenReserve, address(this).balance); 
         
         if(ethBought < _minTokens) revert Exchange__SlippageExceeded();
 
