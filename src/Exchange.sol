@@ -16,6 +16,7 @@ contract Exchange is ERC20 {
     //////////////////////////////////////////////////////////////
     error Exchange__ZeroAddress();
     error Exchange__AddingLiquidityFailed();
+    error Exchange__RemovingLiquidityFailed();
     error Exchange__ZeroValue();
     error Exchange__SlippageExceeded();
     error Exchange__ETHToTokenSwapFailed();
@@ -63,6 +64,22 @@ contract Exchange is ERC20 {
 
             return liquidity;
         }
+    }
+
+    function removeLiquidity(uint256 _amount) external public returns(uint256, uint256){
+        if (_amount < 0) revert Exchange__ZeroValue();
+
+        uint256 ethAmount = (address(this).balance * _amount) / totalSupply();
+        uint256 tokenAmount = (getReserveBalance() * _amount) / totalSupply();
+
+        _burn(msg.sender, _amount);
+
+        (bool success, ) = msg.sender.call{value: ethAmount}("");
+        if(!success) revert Exchange__RemovingLiquidityFailed();
+
+        IERC20(i_tokenAddress).transferFrom(address(this), msg.sender, tokenAmount);
+
+        return (ethAmount, tokenAmount);
     }
 
     function ethToTokenSwap(uint256 _minTokens) external payable {
