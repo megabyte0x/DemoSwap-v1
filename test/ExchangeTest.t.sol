@@ -53,6 +53,26 @@ contract ExchangeTest is Test {
         assertGe(tokenBalanceAfter - tokenBalanceBefore, 18e18);
     }
 
+    function testRemoveLiquidity() public {
+        testAddLiquidity();
+
+        uint256 tokenExchangeBalanceBefore = token.balanceOf(address(exchange));
+        uint256 ethExchangeBalanceBefore = address(exchange).balance;
+
+        console.log("Token Exchange Balance, %s", tokenExchangeBalanceBefore);
+        console.log("ETH Exchange Balance, %s", ethExchangeBalanceBefore);
+
+        uint256 tokenBalanceBefore = token.balanceOf(address(this));
+        uint256 ethBalanceBefore = address(this).balance;
+
+        exchange.removeLiquidity(100e18);
+
+        uint256 tokenBalanceAfter = token.balanceOf(address(this));
+        uint256 ethBalanceAfter = address(this).balance;
+
+        assertEq(tokenBalanceAfter - tokenBalanceBefore, 100e18);
+        assertEq(ethBalanceAfter - ethBalanceBefore, 50 ether);
+    }
 
     function testGetPrice() public {
         testAddLiquidity();
