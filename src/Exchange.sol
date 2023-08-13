@@ -4,6 +4,9 @@ pragma solidity 0.8.18;
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import {IFactory} from "./interfaces/IFactory.sol";
+import {IExchange} from "./interfaces/IExchange.sol";
+
 /**
  * @title Exchange
  * @author Megabyte
@@ -19,7 +22,7 @@ contract Exchange is ERC20 {
     error Exchange__RemovingLiquidityFailed();
     error Exchange__ZeroValue();
     error Exchange__SlippageExceeded();
-    error Exchange__ETHToTokenSwapFailed();
+    error Exchange__ETHToTokenFailed();
     error Exchange__TokenToETHSwapFailed();
 
     //////////////////////////////////////////////////////////////
@@ -29,8 +32,10 @@ contract Exchange is ERC20 {
     event Exchange__LiquidityRemoved(address indexed _user, uint256 _ethAmount, uint256 _tokenAmount, uint256 _lpAmount);
     event Exchange__ETHToTokenSwap(address indexed _user, uint256 _ethAmount, uint256 _tokenAmount);
     event Exchange__TokenToETHSwap(address indexed _user, uint256 _tokenAmount, uint256 _ethAmount);
+    event Exchange__TokenToTokenSwap(address indexed _user, address indexed _sentTokenAddress, address indexed _receivedTokenAddress);
 
     address public immutable i_tokenAddress;
+    address public immutable i_factoryAddress;
 
     string constant public NAME = "Exchange";
     string constant public SYMBOL = "EXC";
@@ -43,6 +48,7 @@ contract Exchange is ERC20 {
     constructor(address _tokenAddress) ERC20(NAME, SYMBOL) {
         if(_tokenAddress == address(0)) revert Exchange__ZeroAddress();
         i_tokenAddress = _tokenAddress;
+        i_factoryAddress = msg.sender;
     }
     
     //////////////////////////////////////////////////////////////
@@ -103,15 +109,12 @@ contract Exchange is ERC20 {
     }
 
     function ethToTokenSwap(uint256 _minTokens) external payable {
-        uint256 tokenReserve = getReserveBalance();
-        uint256 tokensBought = getAmount(msg.value, address(this).balance - msg.value, tokenReserve);
-        
-        if (tokensBought < _minTokens) revert Exchange__SlippageExceeded();
-
-        bool success = IERC20(i_tokenAddress).transfer(msg.sender, tokensBought);
-        if(!success) revert Exchange__ETHToTokenSwapFailed();
-
+        uint256 tokensBought = ethToToken(_minTokens, msg.sender);
         emit Exchange__ETHToTokenSwap(msg.sender, msg.value, tokensBought);
+    }
+
+    function ethToTokenTransfer(uint256 _minTokens, address _recipient) external payable {
+        ethToToken(_minTokens, _recipient);
     }
 
     function tokenToETHSwap(uint256 _tokenSold, uint256 _minTokens) external payable {
@@ -124,6 +127,20 @@ contract Exchange is ERC20 {
         if(!success) revert Exchange__TokenToETHSwapFailed();
 
         emit Exchange__TokenToETHSwap(msg.sender, _tokenSold, ethBought);
+    }
+
+    function tokenToTokenSwap (uint256 _tokensSold, uint256 _minTokensBought, address _tokenAddress) external payable{
+        address exchangeAddress = IFactory(i_factoryAddress).getExchange(_tokenAddress);
+
+        if(exchangeAddress == address(0) && exchangeAddress == address(this)) revert Exchange__ZeroAddress();
+
+        uint256 tokenReserve = getReserveBalance();
+        uint256 ethBought = getAmount(_tokensSold, tokenReserve, address(this).balance);
+
+        IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _tokensSold);
+        IExchange(exchangeAddress).ethToTokenTransfer{value: ethBought}(_minTokensBought, msg.sender);
+
+        emit Exchange__TokenToETHSwap(msg.sender, _tokensSold, ethBought);
     }
 
     //////////////////////////////////////////////////////////////
@@ -180,6 +197,16 @@ contract Exchange is ERC20 {
         uint256 denominator = (inputReserve * 1000) + inputAmountWithFee;
         
         return numerator / denominator;
+    }
+
+    function ethToToken(uint256 _minTokens, address _recepient) private returns (uint256 tokensBought) {
+        uint256 tokenReserve = getReserveBalance();
+        tokensBought = getAmount(msg.value, address(this).balance - msg.value, tokenReserve);
+        
+        if (tokensBought < _minTokens) revert Exchange__SlippageExceeded();
+
+        bool success = IERC20(i_tokenAddress).transfer(_recepient, tokensBought);
+        if(!success) revert Exchange__ETHToTokenFailed();
     }
 
     // Function to receive Ether. msg.data must be empty
