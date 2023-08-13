@@ -4,7 +4,7 @@ This repository is the extension of the [repository](https://github.com/Jeiwan/z
 
 To learn more, refer to Uniswap Book.
 
-All teh Smart Contracts and Subgraphs are deployed on the [Base Testnet.](https://docs.base.org/network-information/#base-testnet)
+All the Smart Contracts and Subgraphs are deployed on the [Base Testnet.](https://docs.base.org/network-information/#base-testnet)
 
 - Factory Contract: [0x1f3667a9513276bcb888a34607ea82416f882c85](https://goerli.basescan.org/address/0x1f3667a9513276bcb888a34607ea82416f882c85)
 - Token Contract[Megabyte,MB]: [0x14dA79a27162Ae6F7B328Ff4908C55af800ac4a6](https://goerli.basescan.org/address/0x14da79a27162ae6f7b328ff4908c55af800ac4a6)
