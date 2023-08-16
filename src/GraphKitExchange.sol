@@ -34,16 +34,18 @@ contract GraphKitExchange is ERC20 {
     event GraphKitExchange__TokenToETHSwap(address indexed _user, uint256 _tokenAmount, uint256 _ethAmount);
     event GraphKitExchange__TokenToTokenSwap(address indexed _user, address indexed _sentTokenAddress, address indexed _receivedTokenAddress);
 
-    address public immutable i_tokenAddress;
-    address public immutable i_factoryAddress;
-
-    string constant public NAME = "GraphKitExchange";
-    string constant public SYMBOL = "GKE";
-
     //////////////////////////////////////////////////////////////
     ////////////////// CONSTANTS /////////////////////////////////
     //////////////////////////////////////////////////////////////
     uint256 constant PRECISION_INCREAMENT = 1000;
+    string constant public NAME = "GraphKitExchange";
+    string constant public SYMBOL = "GKE";
+
+    //////////////////////////////////////////////////////////////
+    ////////////////// IMMUTABLE /////////////////////////////////
+    //////////////////////////////////////////////////////////////
+    address public immutable i_tokenAddress;
+    address public immutable i_factoryAddress;
 
     constructor(address _tokenAddress) ERC20(NAME, SYMBOL) {
         if(_tokenAddress == address(0)) revert GraphKitExchange__ZeroAddress();
@@ -55,6 +57,11 @@ contract GraphKitExchange is ERC20 {
     ////////////////// External Functions ////////////////////////
     //////////////////////////////////////////////////////////////
 
+    /**
+     * @notice This function is used to add liquidity to the pool
+     * @param _tokenAmount Amount of tokens to be added
+     * @dev - If the Reserve is empty then the user can add any amount of tokens and ETH, else the user can add ETH in the ratio of the tokens in the reserve.
+     */
     function addLiquidity(uint256 _tokenAmount) external payable returns(uint256){
 
         if(!(getReserveBalance()>0)) {
@@ -108,15 +115,29 @@ contract GraphKitExchange is ERC20 {
         return (ethAmount, tokenAmount);
     }
 
+    /**
+     * @notice This function is used to swap ETH to Tokens
+     * @param _minTokens Minimum amount of tokens to be received
+     */
     function ethToTokenSwap(uint256 _minTokens) external payable {
         uint256 tokensBought = ethToToken(_minTokens, msg.sender);
         emit GraphKitExchange__ETHToTokenSwap(msg.sender, msg.value, tokensBought);
     }
 
+    /**
+     * @notice This function is used to swap Tokens to ETH but with a custom recipient.
+     * @param _minTokens Minimum amount of tokens to be received
+     * @param _recipient Address of the recipient
+     */
     function ethToTokenTransfer(uint256 _minTokens, address _recipient) external payable {
         ethToToken(_minTokens, _recipient);
     }
 
+    /**
+     * @notice This function is used to swap Tokens to ETH
+     * @param _tokenSold Amount of tokens to be sold
+     * @param _minTokens Minimum amount of tokens to be received
+     */
     function tokenToETHSwap(uint256 _tokenSold, uint256 _minTokens) external payable {
         uint256 tokenReserve = getReserveBalance();
         uint256 ethBought = getAmount(_tokenSold, tokenReserve, address(this).balance); 
@@ -129,6 +150,12 @@ contract GraphKitExchange is ERC20 {
         emit GraphKitExchange__TokenToETHSwap(msg.sender, _tokenSold, ethBought);
     }
 
+    /**
+     * @notice This function is used to swap Tokens to Token
+     * @param _tokensSold Amount of tokens to be sold
+     * @param _minTokensBought Minimum amount of tokens to be received
+     * @param _tokenAddress Address of the token to be received
+     */
     function tokenToTokenSwap (uint256 _tokensSold, uint256 _minTokensBought, address _tokenAddress) external payable{
         address exchangeAddress = IFactory(i_factoryAddress).getExchange(_tokenAddress);
 
@@ -147,6 +174,11 @@ contract GraphKitExchange is ERC20 {
     ////////////////// External & Pure Functions /////////////////
     //////////////////////////////////////////////////////////////
 
+    /**
+     * @notice This function is used to get the price, either of Token/ETH or ETH/Token
+     * @param inputReserve Amount of ETH or Tokens in the reserve
+     * @param outputReserve Amount of ETH or Tokens 
+     */
     function getPrice(uint256 inputReserve, uint256 outputReserve) external pure returns (uint256) {
         if (inputReserve < 0 && outputReserve < 0) revert GraphKitExchange__ZeroValue();
 
@@ -157,6 +189,10 @@ contract GraphKitExchange is ERC20 {
     ////////////////// Public & View Functions ///////////////////
     //////////////////////////////////////////////////////////////
 
+    /**
+     * @notice To get the amount of tokens that will be received for a given amount of ETH
+     * @param _ethSold Amount of ETH to be sold
+     */
     function getTokenAmount(uint256 _ethSold) public view returns (uint256) {
         if(_ethSold<0) revert GraphKitExchange__ZeroValue();
 
@@ -165,6 +201,10 @@ contract GraphKitExchange is ERC20 {
         return getAmount(_ethSold, address(this).balance, tokenReserve);
     }
 
+    /**
+     * @notice To get the amount of ETH that will be received for a given amount of Tokens
+     * @param _tokenSold Amount of Tokens to be sold
+     */
     function getETHAmount(uint256 _tokenSold) public view returns (uint256) {
         if(_tokenSold<0) revert GraphKitExchange__ZeroValue();
 
@@ -173,6 +213,9 @@ contract GraphKitExchange is ERC20 {
         return getAmount(_tokenSold, tokenReserve, address(this).balance);
     }
 
+    /**
+     * @notice To get the amount of tokens in the reserve
+     */
     function getReserveBalance() public view returns (uint256) {
         return IERC20(i_tokenAddress).balanceOf(address(this));
     }
@@ -199,6 +242,11 @@ contract GraphKitExchange is ERC20 {
         return numerator / denominator;
     }
 
+    /**
+     * @notice This function is used to swap ETH to Tokens
+     * @param _minTokens Minimum amount of tokens to be received
+     * @param _recepient Address of the recipient
+     */
     function ethToToken(uint256 _minTokens, address _recepient) private returns (uint256 tokensBought) {
         uint256 tokenReserve = getReserveBalance();
         tokensBought = getAmount(msg.value, address(this).balance - msg.value, tokenReserve);
