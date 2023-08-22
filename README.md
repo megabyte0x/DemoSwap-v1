@@ -12,3 +12,10 @@ All the Smart Contracts and Subgraphs are deployed on the [Base Testnet.](https:
 - GraphKitExchange Contract Subgraph: https://api.studio.thegraph.com/query/48418/graphkit/v0.0.2
 
 GraphKitExchange Contract Subgraph Repo [here](https://github.com/megabyte0x/demoswap-v1-subgraph).
+
+Contracts on Polygon Mumbai Testnet:
+
+- Factory Contract: [0xFB080aE4aD2E92df5D40910f2d5C6b462fd89ec4](https://mumbai.polygonscan.com/address/0xfb080ae4ad2e92df5d40910f2d5c6b462fd89ec4)
+- Token Contract[Megabyte,MB]: [0xa55ebff4d44ac240fd1ce4d39db254fdae36cb9d](https://mumbai.polygonscan.com/address/0xa55ebff4d44ac240fd1ce4d39db254fdae36cb9d)
+- GraphKitExchange Contract: [0xdaC8c328B181C8723D3f623F3406f43F2c158754](https://mumbai.polygonscan.com/address/0xdac8c328b181c8723d3f623f3406f43f2c158754)
+- GraphKitExchange Contract Subgraph: https://api.studio.thegraph.com/query/48418/graphkit-mumbai/v0.0.1
